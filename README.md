@@ -1,6 +1,6 @@
 # Cardano Go SDK
 
-A Go SDK for querying the Cardano blockchain, inspired by [sui-go-sdk](https://github.com/block-vision/sui-go-sdk).
+A Go SDK for querying the Cardano blockchain.
 
 ## Installation
 
@@ -38,7 +38,7 @@ func main() {
 		log.Fatal(err)
 	}
 	for _, b := range balances {
-		fmt.Printf("%s: %d (across %d UTxOs)\n", b.Asset, b.Quantity, b.UTxOCount)
+		fmt.Printf("%s: %s (across %d UTxOs)\n", b.Asset, b.Quantity, b.UTxOCount)
 	}
 
 	// Get balance of a specific token
@@ -49,7 +49,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("MIN balance: %d\n", bal.Quantity)
+	fmt.Printf("MIN balance: %s\n", bal.Quantity)
 
 	// Get all UTxOs at an address
 	utxos, err := client.UTxOs(ctx, addr)
@@ -57,7 +57,21 @@ func main() {
 		log.Fatal(err)
 	}
 	for _, u := range utxos {
-		fmt.Printf("UTxO %s: %d lovelace\n", u.Input, u.Value.Coin)
+		fmt.Printf("UTxO %s: %s lovelace\n", u.Input, u.Value.Coin)
+	}
+
+	// Get UTxOs by specific transaction inputs
+	utxos, err = client.UTxOsByTxIns(ctx, []cardano.TxIn{
+		{TxHash: "abcdef...", Index: 0},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get UTxOs by payment credential
+	utxos, err = client.UTxOsByPaymentCredential(ctx, "abcdef0123456789...")
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 ```
@@ -73,7 +87,28 @@ type Client interface {
 	GetAllBalances(ctx context.Context, address string) ([]Balance, error)
 	GetBalanceOfCoin(ctx context.Context, address string, asset Asset) (*Balance, error)
 	UTxOs(ctx context.Context, address string) ([]UTxO, error)
+	UTxOsByTxIns(ctx context.Context, txIns []TxIn) ([]UTxO, error)
+	UTxOsByPaymentCredential(ctx context.Context, credential string) ([]UTxO, error)
 	Health(ctx context.Context) error
+}
+```
+
+### Types
+
+All value amounts use `*big.Int` to handle Cardano's arbitrary-precision token quantities.
+
+```go
+// Value represents lovelace + multi-asset tokens
+type Value struct {
+	Coin       *big.Int
+	MultiAsset map[string]map[string]*big.Int
+}
+
+// Balance for a specific asset across UTxOs
+type Balance struct {
+	Asset     Asset
+	Quantity  *big.Int
+	UTxOCount int
 }
 ```
 
