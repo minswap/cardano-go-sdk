@@ -1,0 +1,4 @@
+interface:
+  display_name: "Use Modern Go"
+  short_description: "Design reliable, maintainable, modern Go code"
+  default_prompt: "Apply modern Go best practices for architecture, API compatibility, testing, concurrency, and reliability in this task."
